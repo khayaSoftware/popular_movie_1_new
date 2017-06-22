@@ -11,4 +11,5 @@
             app:showAsAction="never"/>
         <!-- //COMPLETED  REQUIRED String literals should be in strings.xml or defined as constants; improves localisation & maintenance, less error prone. -->
         <!-- COMPLETED-2 REQUIREMENT String literals include the string literal above "sort"  -->
+        <!-- TODO-4 EXCELLENT Job done on Phase 1. Be sure to implement suggestions for Phase 2 especially those that are required. -->
 </menu>
