@@ -13,7 +13,7 @@ import java.util.ArrayList;
  * Created by noybs on 23/05/2017.
  */
 
-public class OpenMovieJsonUtils{
+public class OpenMovieJsonUtils {
     private final static String TAG = OpenMovieJsonUtils.class.getSimpleName();
     private final static String POSTER_PATH = "poster_path";
     private final static String OVERVIEW = "overview";
@@ -24,7 +24,12 @@ public class OpenMovieJsonUtils{
     private final static String VOTE_COUNT = "vote_count";
     private final static String VOTE_AVE = "vote_average";
     private final static String RESULTS = "results";
-    public static ArrayList getSimpleMovieStrings(Context context, String movieJsonStr)throws JSONException{
+    private final static String CONTENT = "content";
+    private final static String AUTHOR = "author";
+    private final static String YOUTUBE = "youtube";
+    private final static String SOURCE = "source";
+
+    public static ArrayList getSimpleMovieStrings(Context context, String movieJsonStr) throws JSONException {
 
         ArrayList movies = new ArrayList();
 
@@ -32,7 +37,7 @@ public class OpenMovieJsonUtils{
 
         JSONArray movieArray = movieJson.getJSONArray(RESULTS);
 
-        for(int i = 0; i < movieArray.length(); ++i){
+        for (int i = 0; i < movieArray.length(); ++i) {
             Movie movie = new Movie(
                     movieArray.getJSONObject(i).getString(POSTER_PATH),
                     movieArray.getJSONObject(i).getString(OVERVIEW),
@@ -47,6 +52,36 @@ public class OpenMovieJsonUtils{
             movies.add(movie);
         }
         return movies;
+    }
+
+    public static ArrayList<String> getSimpleReviewStrings(Context context, String movieJsonStr) throws JSONException {
+
+        ArrayList<String> reviews = new ArrayList<String>();
+
+        JSONObject movieJson = new JSONObject(movieJsonStr);
+
+        JSONArray movieArray = movieJson.getJSONArray(RESULTS);
+
+        for (int i = 0; i < movieArray.length(); ++i) {
+            String review = movieArray.getJSONObject(i).getString(AUTHOR) + "\n" + movieArray.getJSONObject(i).getString(CONTENT);
+            reviews.add(review);
+        }
+        return reviews;
+    }
+
+    public static ArrayList<String> getSimpleTrailerStrings(Context context, String movieJsonStr) throws JSONException {
+
+        ArrayList<String> reviews = new ArrayList<String>();
+
+        JSONObject movieJson = new JSONObject(movieJsonStr);
+
+        JSONArray movieArray = movieJson.getJSONArray(YOUTUBE);
+
+        for (int i = 0; i < movieArray.length(); ++i) {
+            String review = movieArray.getJSONObject(i).getString(SOURCE);
+            reviews.add(review);
+        }
+        return reviews;
     }
 
 }

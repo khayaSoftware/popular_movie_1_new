@@ -2,51 +2,48 @@ package com.example.android.app.khayapopularmovies;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
+import android.content.res.Configuration;
+import android.database.Cursor;
 import android.os.Bundle;
-import android.support.v4.view.MenuCompat;
-import android.support.v4.view.MenuItemCompat;
+import android.os.PersistableBundle;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutCompat;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.squareup.picasso.Picasso;
-
-import org.w3c.dom.Text;
+import com.example.android.app.khayapopularmovies.data.ContractFavoriteMovie;
+import com.example.android.app.khayapopularmovies.data.HelperFavoriteMovie;
 
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.zip.Inflater;
 
-public class MainActivity extends AppCompatActivity implements MovieAdapter.MovieAdapterOnClickHandler {
+public class MainActivity extends AppCompatActivity implements MovieAdapter.MovieAdapterOnClickHandler, LoaderManager.LoaderCallbacks<ArrayList<Movie>> {
 
-
-    private String url;
+    private String jsonData;
     private TextView textView;
     private MovieAdapter mAdapter;
     private RecyclerView mMovieList;
     ArrayList movieList;
-    private final String TOP_RATED = "top_rated";
-    private final String POPULAR = "popular";
+    private final static String TOP_RATED = "top_rated";
+    private final static String POPULAR = "popular";
+    private final static String FAVOURITE = "Favourites";
     private ProgressBar mLoadingIndicatore;
     private TextView mErrorMessageDisplay;
     private RecyclerView mRecyclerView;
-
+    private static final int LOADER_ID = 22;
+    private static String optionSelected;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,13 +52,17 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         setContentView(R.layout.activity_main);
 
         mLoadingIndicatore = (ProgressBar) findViewById(R.id.progress);
-
+        //For deleting database BE CAREFUL!!
+        //HelperFavoriteMovie.deleteDatabase(this);
         mErrorMessageDisplay = (TextView) findViewById(R.id.error);
 
         mMovieList = (RecyclerView) findViewById(R.id.rv_movies);
-
-        GridLayoutManager gridLayout = new GridLayoutManager(this, 3);
-        //TODO EXCELLENT You're using a GridLayoutManager to display the thumbnails
+        GridLayoutManager gridLayout;
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            gridLayout = new GridLayoutManager(this, 3);
+        } else {
+            gridLayout = new GridLayoutManager(this, 2);
+        }
 
         mMovieList.setLayoutManager(gridLayout);
 
@@ -71,14 +72,44 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
         mMovieList.setAdapter(mAdapter);
 
-        loadMovieData();
+        String currentOption = getString(R.string.empty);
+
+        if(savedInstanceState!=null){
+            if(savedInstanceState.containsKey(getString(R.string.menu_item_key))){
+                currentOption = savedInstanceState.getString(getString(R.string.menu_item_key));
+            }
+        }else {
+            currentOption = POPULAR;
+            optionSelected = POPULAR;
+        }
+
+        loadMovieData(currentOption);
 
     }
 
-    private void loadMovieData() {
-        showMovieDataView();
+    @Override
+    protected void onResume() {
+        super.onResume();
+        String currentState = getString(R.string.empty);
+        Bundle bundle = getIntent().getExtras();
+        if(bundle != null){
+            if(bundle.containsKey(getString(R.string.menu_item_key))){
+                currentState = bundle.getString(getString(R.string.menu_item_key));
+                loadMovieData(currentState);
+            }
+        }
+    }
 
-        new FetchMoviesTask().execute(POPULAR);
+    @Override
+    protected void onStop() {
+        super.onStop();
+        getIntent().putExtra(getString(R.string.menu_item_key), optionSelected);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(getString(R.string.menu_item_key), optionSelected);
     }
 
     private void showMovieDataView() {
@@ -90,48 +121,92 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     private void showErrorMessage() {
         mMovieList.setVisibility(View.INVISIBLE);
 
+        mErrorMessageDisplay.setText(getString(R.string.error_msg));
         mErrorMessageDisplay.setVisibility(View.VISIBLE);
     }
 
-    public class FetchMoviesTask extends AsyncTask<String, Void, ArrayList<Movie>>{
-    //TODO SUGGESTION Use AsyncTaskLoader, it is more efficient than AsyncTask as discussed in class
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            mLoadingIndicatore.setVisibility(View.VISIBLE);
+    private void showDataErrorMessage(){
+        mMovieList.setVisibility(View.INVISIBLE);
+
+        mErrorMessageDisplay.setText(getString(R.string.error_fav_msg));
+        mErrorMessageDisplay.setVisibility(View.VISIBLE);
+
+    }
+
+    private void loadMovieData(String selectedMenuItem) {
+        showMovieDataView();
+        Bundle bundle = new Bundle();
+        bundle.putString(getString(R.string.menu_item_key), selectedMenuItem);
+
+        LoaderManager lm = getSupportLoaderManager();
+        android.support.v4.content.Loader<ArrayList<Movie>> movieLoader = lm.getLoader(LOADER_ID);
+
+        if (movieLoader == null) {
+            lm.initLoader(LOADER_ID, bundle, this);
+        } else {
+            lm.restartLoader(LOADER_ID, bundle, this);
         }
 
-        @Override
-        protected ArrayList<Movie> doInBackground(String... params) {
-            if(params.length == 0){
-                return null;
+    }
+
+    @Override
+    public Loader<ArrayList<Movie>> onCreateLoader(int id, final Bundle args) {
+
+        return new AsyncTaskLoader<ArrayList<Movie>>(this) {
+
+            @Override
+            protected void onStartLoading() {
+
+                if (args == null) {
+                    return;
+                }
+
+                mLoadingIndicatore.setVisibility(View.VISIBLE);
+                forceLoad();
             }
 
-            URL movieRequest = NetworkUtils.buildUrl(params[0]);
-            try{
-                url = NetworkUtils.getResponseFromHttpUrl(movieRequest);
-                // TODO SUGGESTION Use meaningful & unambiguous identifier names.
-                // TODO SUGGESTION 'url' is a very misleading identifier name, the string 'url' actually contains JSON data
-                ArrayList movies = OpenMovieJsonUtils.getSimpleMovieStrings(MainActivity.this, url);
-                movieList = movies;
-                return movies;
-            }catch (Exception e){
-                e.printStackTrace();
-                return null;
-            }
-            //TODO AWESOME You're doing all the heavy lifting on a background thread, leaving the UI thread free => UX++
-        }
+            @Override
+            public ArrayList<Movie> loadInBackground() {
 
-        @Override
-        protected void onPostExecute(ArrayList<Movie> movies) {
-            mLoadingIndicatore.setVisibility(View.INVISIBLE);
-            if(movies != null){
-                showMovieDataView();
-                mAdapter.setMovieData(movies);
-            }else {
-                showErrorMessage();
+                if(args.getString(getString(R.string.menu_item_key)).equals(POPULAR) || args.getString(getString(R.string.menu_item_key)).equals(TOP_RATED)){
+                    URL movieRequest = NetworkUtils.buildUrl(args.getString(getString(R.string.menu_item_key)));
+                    try {
+                        jsonData = NetworkUtils.getResponseFromHttpUrl(movieRequest);
+                        ArrayList movies = OpenMovieJsonUtils.getSimpleMovieStrings(MainActivity.this, jsonData);
+                        movieList = movies;
+                        return movies;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                }else if(args.getString(getString(R.string.menu_item_key)).equals(FAVOURITE)){
+                        movieList = loadFavouriteMovies();
+                        return movieList;
+                }else {
+                    return null;
+                }
+
             }
+
+        };
+
+
+    }
+
+    @Override
+    public void onLoadFinished(Loader<ArrayList<Movie>> loader, ArrayList<Movie> movies) {
+        mLoadingIndicatore.setVisibility(View.INVISIBLE);
+        if (movies != null) {
+            showMovieDataView();
+            mAdapter.setMovieData(movies);
+        } else {
+            showErrorMessage();
         }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<ArrayList<Movie>> loader) {
+        //Do nothing
     }
 
     @Override
@@ -140,15 +215,19 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         Class destination = MovieDetailActivity.class;
         Intent intentToStartAct = new Intent(context, destination);
         Bundle extras = new Bundle();
-        extras.putString(getString(R.string.bundle_url),movie.backdropPath);
-        extras.putString(getString(R.string.bundle_description),movie.overview);
+        extras.putString(getString(R.string.bundle_url), movie.backdropPath);
+        extras.putString(getString(R.string.bundle_description), movie.overview);
         extras.putString(getString(R.string.bundle_title), movie.title);
-        extras.putString(getString(R.string.bundle_release_date), movie.releaseDate.substring(0,4));
+        extras.putString(getString(R.string.bundle_release_date), movie.releaseDate.substring(0, 4));
         extras.putString(getString(R.string.bundle_vote_average), movie.voteAverage);
-        //COMPLETED REQUIRED String literals should be in strings.xml or defined as constants; improves localisation & maintenance, less error prone.
+        extras.putString(getString(R.string.bundle_poster_url), movie.posterPath);
+        extras.putString(getString(R.string.bundle_vote_count), movie.voteCount);
+        extras.putString(getString(R.string.bundle_id), movie.id);
 
         intentToStartAct.putExtras(extras);
         startActivity(intentToStartAct);
+
+
     }
 
     @Override
@@ -161,17 +240,79 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        switch (id){
+        switch (id) {
             case R.id.popular:
+                optionSelected = POPULAR;
                 mAdapter.setMovieData(null);
-                new FetchMoviesTask().execute(POPULAR); //TODO EXCELLENT Good use of String constants here
+                loadMovieData(POPULAR);
+                Toast.makeText(this, getString(R.string.label_popular_movies), Toast.LENGTH_LONG).show();
                 return true;
 
             case R.id.top_rated:
+                optionSelected = TOP_RATED;
                 mAdapter.setMovieData(null);
-                new FetchMoviesTask().execute(TOP_RATED);
+                loadMovieData(TOP_RATED);
+                Toast.makeText(this, getString(R.string.label_top_rated_movies), Toast.LENGTH_LONG).show();
+                return true;
+
+            case R.id.favourites:
+                optionSelected = FAVOURITE;
+                mAdapter.setMovieData(null);
+                loadMovieData(FAVOURITE);
+                Toast.makeText(this, getString(R.string.favourite_label), Toast.LENGTH_LONG).show();
                 return true;
         }
+
+
         return super.onOptionsItemSelected(item);
+    }
+
+    public Cursor returnFavourites() {
+        return getContentResolver().query(ContractFavoriteMovie.FavoriteMovieEntry.CONTENT_URI,
+                null,
+                null,
+                null,
+                null);
+
+    }
+
+    private ArrayList<Movie> loadFavouriteMovies(){
+        Cursor cursor = returnFavourites();
+        cursor.moveToFirst();
+
+        ArrayList<Movie> favoriteMovies = new ArrayList<Movie>();
+        try{
+            while (cursor.moveToNext()) {
+                String movieName = cursor.getString(cursor.getColumnIndex(ContractFavoriteMovie.FavoriteMovieEntry.COLUMN_TITLE));
+                String movieDescription = cursor.getString(cursor.getColumnIndex(ContractFavoriteMovie.FavoriteMovieEntry.COLUMN_DESCRIPTION));
+                String movieRelease = cursor.getString(cursor.getColumnIndex(ContractFavoriteMovie.FavoriteMovieEntry.COLUMN_RELEASE_DATE));
+                String movieID = cursor.getString(cursor.getColumnIndex(ContractFavoriteMovie.FavoriteMovieEntry.MOVIE_ID)).toString();
+                String movieBackdrop = cursor.getString(cursor.getColumnIndex(ContractFavoriteMovie.FavoriteMovieEntry.COLUMN_BACKDROP_URL));
+                String moviePoster = cursor.getString(cursor.getColumnIndex(ContractFavoriteMovie.FavoriteMovieEntry.COLUMN_POSTER_URL));
+                String movieVoteAverage = cursor.getString(cursor.getColumnIndex(ContractFavoriteMovie.FavoriteMovieEntry.COLUMN_VOTE_AVERAGE));
+                String movieVoteCount = cursor.getString(cursor.getColumnIndex(ContractFavoriteMovie.FavoriteMovieEntry.COLUMN_VOTE_COUNT));
+
+                Movie favouriteMovie = new Movie(
+                        moviePoster,
+                        movieDescription,
+                        movieRelease,
+                        movieID,
+                        movieName,
+                        movieBackdrop,
+                        movieVoteCount,
+                        movieVoteAverage
+                );
+
+                favouriteMovie.setFavourite(1);
+                favoriteMovies.add(favouriteMovie);
+                //Toast.makeText(this, movieName, Toast.LENGTH_LONG).show();
+            }
+        }finally {
+            cursor.close();
+        }
+
+        return favoriteMovies;
+        //HelperFavoriteMovie.deleteDatabase(this);
+        //Toast.makeText(this, updated, Toast.LENGTH_LONG).show();
     }
 }

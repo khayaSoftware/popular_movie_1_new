@@ -2,9 +2,9 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000">
-    <FrameLayout
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/colorPrimary">
+
+    <FrameLayout xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -13,66 +13,107 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:layout_margin="@dimen/margin0"
             android:background="@drawable/gradient"
-            android:padding="0dp"
-            android:layout_margin="0sp">
+            android:orientation="vertical">
 
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:scaleType="centerCrop"
-                    android:id="@+id/movie_poster"/>
-<!-- TODO SUGGESTION When network connectivity is lost your app doesn't display the poster - consider a default image in that case -->
+            <ImageView
+                android:id="@+id/movie_poster"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scaleType="centerCrop" />
 
 
         </LinearLayout>
 
 
-            <LinearLayout
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="@dimen/margin0"
+            android:background="@drawable/gradient"
+            android:orientation="vertical"
+            android:padding="@dimen/margin0">
+
+            <TextView
+                android:id="@+id/tv_title"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_margin="@dimen/neg20"
+                android:layout_marginTop="@dimen/pushdown120"
                 android:background="@drawable/gradient"
-                android:padding="0dp"
-                android:layout_margin="0sp">
+                android:gravity="start"
+                android:paddingLeft="@dimen/padding10"
+                android:textColor="@color/white"
+                android:textSize="@dimen/font30" />
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:textSize="30sp"
-                    android:layout_margin="-20dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:id="@+id/tv_title"
-                    android:gravity="left"
-                    android:textColor="#fff"
-                    android:layout_marginTop="150dp"
-                    android:background="@drawable/gradient"
-                    android:paddingLeft="10dp"/>
-                <!-- TODO-2 SUGGESTION Use sp only for text, use dp for other sizes - also move them to dimens.xml -->
-                <!-- TODO-2 SUGGESTION Accessibility - throughout your xml: use 'start' and 'end' instead of 'left' and 'right' - to support RTL languages -->
-                <TextView
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:gravity="left"
-                    android:paddingLeft="10sp"
-                    android:textSize="14sp"
-                    android:id="@+id/tv_stats"
-                    android:textColor="#EEBC10"
-                    android:background="@drawable/gradient"
-                    />
-                <TextView
-                    android:layout_width="match_parent"
-                    android:textSize="23sp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:id="@+id/tv_description"
-                    android:gravity="left"
-                    android:textColor="#fff"
-                    android:paddingLeft="10sp"/>
+            <TextView
+                android:id="@+id/tv_stats"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/gradient"
+                android:gravity="start"
+                android:paddingLeft="@dimen/padding10"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="@color/colorGold"
+                android:textSize="@dimen/font14" />
 
-            </LinearLayout>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/borderheight"
+                android:background="@color/darkgray"/>
+
+            <TextView
+                android:id="@+id/tv_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:gravity="start"
+                android:paddingBottom="@dimen/padding10"
+                android:paddingLeft="@dimen/padding10"
+                android:textColor="@color/white"
+                android:textSize="@dimen/font23" />
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/rv_trailers"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            </android.support.v7.widget.RecyclerView>
+
+            <TextView
+                android:id="@+id/reviews_count"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:background="@drawable/gradient_down"
+                android:gravity="start"
+                android:paddingBottom="@dimen/padding10"
+                android:paddingTop="@dimen/padding10"
+                android:paddingLeft="@dimen/padding10"
+                android:text="@string/Review_section_title"
+                android:textColor="@color/colorGold"
+                android:textSize="@dimen/font23" />
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/rv_reviews"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            </android.support.v7.widget.RecyclerView>
+
+
+        </LinearLayout>
+
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_margin="@dimen/margin16"
+            android:clickable="true"
+            android:src="@drawable/ic_favorite_white_24dp"
+            android:tint="@color/colorGold" />
 
     </FrameLayout>
 </ScrollView>

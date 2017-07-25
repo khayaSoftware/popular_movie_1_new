@@ -16,30 +16,30 @@ import java.util.ArrayList;
 import static java.security.AccessController.getContext;
 
 /**
- * Created by User on 5/16/2017.
+ * Created by Khaya on 5/16/2017.
  */
-//TODO-2 SUGGESTION Be careful of templates, it could appear as though the work was not yours.
 
-public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHolder>{
+public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHolder> {
 
     public final MovieAdapterOnClickHandler mClickHandler;
     private ArrayList<Movie> mMovies;
     static final String TAG = MovieAdapter.class.getSimpleName();
     static final String PARTIAL_IMAGE_LINK = "http://image.tmdb.org/t/p/w185/";
     private int mMoviesItems;
-    private  Context context;
+    private Context context;
 
-    public MovieAdapter(MovieAdapterOnClickHandler clickHandler, Context context){
+    public MovieAdapter(MovieAdapterOnClickHandler clickHandler, Context context) {
         this.mClickHandler = clickHandler;
         mMoviesItems = getItemCount();
         this.context = context;
     }
 
-    public interface MovieAdapterOnClickHandler{
+    public interface MovieAdapterOnClickHandler {
         void onClick(Movie movie);
     }
 
-    public class MovieViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+    public class MovieViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+
 
         @Override
         public void onClick(View v) {
@@ -50,7 +50,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
 
         ImageView gridMovieImage;
 
-        public MovieViewHolder(View itemView){
+        public MovieViewHolder(View itemView) {
             super(itemView);
             gridMovieImage = (ImageView) itemView.findViewById(R.id.movie_image);
             itemView.setOnClickListener(this);
@@ -72,15 +72,13 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
     }
 
 
-
     @Override
     public void onBindViewHolder(MovieViewHolder holder, int position) {
-
         String imagePath = PARTIAL_IMAGE_LINK + mMovies.get(position).posterPath;
 
-        try{
+        try {
             Picasso.with(context).load(imagePath).into(holder.gridMovieImage);
-        }catch (Exception e){
+        } catch (Exception e) {
 
             e.printStackTrace();
         }
@@ -89,11 +87,11 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
 
     @Override
     public int getItemCount() {
-        if(null == mMovies)return 0;
+        if (null == mMovies) return 0;
         return mMovies.size();
     }
 
-    public void setMovieData(ArrayList<Movie> movies){
+    public void setMovieData(ArrayList<Movie> movies) {
         mMovies = movies;
         notifyDataSetChanged();
     }

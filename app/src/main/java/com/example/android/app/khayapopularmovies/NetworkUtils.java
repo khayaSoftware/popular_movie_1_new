@@ -15,45 +15,60 @@ import java.util.Scanner;
  */
 
 public class NetworkUtils {
-    private static final String  BASE_URL = "http://api.themoviedb.org/3/movie/";
-    //COMPLETED SUGGESTION Follow the standard Java Naming Conventions i.e. BASE_URL in this instance
+    private static final String BASE_URL = "http://api.themoviedb.org/3/movie/";
+    private static final String TAG = NetworkUtils.class.getSimpleName();
+    private final static String DELIMETER = "\\A";
 
     private static final String API_QUERY = "api_key";
 
     private static final String API_KEY = BuildConfig.MY_MOVIEDB_API_KEY;
-    //TODO AWESOME You're keeping your API key out of source code!
 
-    public static URL buildUrl(String sortBy){
+    public static URL buildUrl(String sortBy) {
         Uri builtUri = Uri.parse(BASE_URL).buildUpon()
                 .appendPath(sortBy)
                 .appendQueryParameter(API_QUERY, API_KEY)
                 .build();
 
         URL url = null;
-        try{
+        try {
             url = new URL(builtUri.toString());
-        }catch (MalformedURLException e){
+        } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-
         return url;
     }
 
-    public static String getResponseFromHttpUrl(URL url) throws IOException{
+    public static URL buildUrl(String sortBy, String movieid) {
+        Uri builtUri = Uri.parse(BASE_URL).buildUpon()
+                .appendPath(movieid)
+                .appendPath(sortBy)
+                .appendQueryParameter(API_QUERY, API_KEY)
+                .build();
+
+        URL url = null;
+        try {
+            url = new URL(builtUri.toString());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return url;
+    }
+
+    public static String getResponseFromHttpUrl(URL url) throws IOException {
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-        try{
+        try {
             InputStream in = urlConnection.getInputStream();
 
             Scanner scanner = new Scanner(in);
-            scanner.useDelimiter("\\A");
+            scanner.useDelimiter(DELIMETER);
 
             boolean hasInput = scanner.hasNext();
-            if(hasInput){
+            if (hasInput) {
                 return scanner.next();
-            }else{
+            } else {
                 return null;
             }
-        }finally {
+        } finally {
             urlConnection.disconnect();
         }
     }
